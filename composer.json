@@ -1,6 +1,6 @@
 {
     "name": "10quality/scheduler",
-    "description": "Cronjob scheduler written in PHP.",
+    "description": "PHP job scheduler. (Cronjob tasker)",
     "homepage": "https://github.com/10quality/scheduler",
     "keywords": [
         "cronjob",
@@ -8,6 +8,8 @@
         "schedules",
         "events",
         "jobs",
+        "task",
+        "tasker",
         "php"
     ],
     "type": "library",
