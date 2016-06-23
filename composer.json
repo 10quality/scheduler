@@ -1,0 +1,36 @@
+{
+    "name": "10quality/scheduler",
+    "description": "Cronjob scheduler written in PHP.",
+    "homepage": "https://github.com/10quality/scheduler",
+    "keywords": [
+        "cronjob",
+        "scheduler",
+        "schedules",
+        "events",
+        "jobs",
+        "php"
+    ],
+    "type": "library",
+    "authors": [
+        {
+            "name": "Alejandro Mostajo",
+            "homepage": "http://about.me/amostajo"
+        },
+        {
+            "name": "10Quality",
+            "homepage": "http://www.10quality.com/"
+        }
+    ],
+    "license": "MIT",
+    "require-dev": {
+        "phpunit/phpunit": "4.4.*"
+    },
+    "require": {
+        "amostajo/php-json-array": "^1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Scheduler\\": "src"
+        }
+    }
+}
