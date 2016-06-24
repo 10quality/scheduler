@@ -136,30 +136,39 @@ abstract class Tasker
             case Task::MIN1:
                 if ($this->lapsedTimeToMinutes($job) > 1)
                     return true;
+                break;
             case Task::MIN5:
                 if ($this->lapsedTimeToMinutes($job) > 5)
                     return true;
+                break;
             case Task::MIN10:
                 if ($this->lapsedTimeToMinutes($job) > 10)
                     return true;
+                break;
             case Task::MIN30:
                 if ($this->lapsedTimeToMinutes($job) > 30)
                     return true;
+                break;
             case Task::MIN60:
                 if ($this->lapsedTimeToMinutes($job) > 60)
                     return true;
+                break;
             case Task::MIN720:
                 if ($this->lapsedTimeToMinutes($job) > 720)
                     return true;
+                break;
             case Task::DAILY:
                 if ($this->timeToDay($job) != date('Ymd'))
                     return true;
+                break;
             case Task::MONTHLY:
                 if ($this->timeToMonth($job) != date('Ym'))
                     return true;
+                break;
             case Task::WEEKLY:
                 if ($this->timeToWeek($job) != date('YW'))
                     return true;
+                break;
             case Task::NOW:
                     return true;
         }
