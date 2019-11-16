@@ -131,6 +131,29 @@ $task->everyThreeDays();
 $task->custom($minutes);
 ```
 
+### Events
+
+You can define callable event handlers when configuring the scheduler, like in the following example:
+Scheduler::ready([
+    'jobs'      => ['path' => __DIR__.'/jobs'],
+    'session'   => ['driver' => 'file', 'path'=>__DIR__.'/.tmp'],
+    'events'    => [
+                    'on_start' => function($microtime) {
+                        // Do something during event
+                    }
+                ],
+]);
+
+List of events (parameters can be used optionally):
+
+| Event key | Parameters | Description |
+| --- | --- | --- |
+| `on_init` |  | Triggered before session is validated. |
+| `on_start` | *int* **$microtime** | Triggered before executing any job. |
+| `on_finish` | *int* **$microtime** | Triggered after executing all jobs and saving session. |
+| `on_job_start` | *string* **$jobName**, *int* **$microtime** | Triggered before executing of a job. |
+| `on_job_finish` | *string* **$jobName**, *int* **$microtime** | Triggered after executing of job. |
+
 ### Handling Exceptions
 
 Scheduler will run continuously without interruption. You can handle exceptions individually per job or globally to log them as needed.

@@ -46,10 +46,8 @@ class Scheduler extends Tasker
                     $this->session = call_user_func_array($settings['session']['callable'], []);
                 break;
         }
-        if (array_key_exists('events', $settings)
-            && array_key_exists('on_exception', $settings['events'])
-        )
-            $this->onExceptionCallable = $settings['events']['on_exception'];
+        if (array_key_exists('events', $settings) && is_array($settings['events']))
+            $this->events = $settings['events'];
     }
 
     /**

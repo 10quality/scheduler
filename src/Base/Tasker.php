@@ -41,11 +41,11 @@ abstract class Tasker
     protected $jobs;
 
     /**
-     * Callback to use when an exception occurs.
+     * Event callables.
      * @since 1.0.4
-     * @var callable
+     * @var array
      */
-    protected $onExceptionCallable;
+    protected $events = [];
 
     /**
      * Default constructor.
@@ -96,8 +96,12 @@ abstract class Tasker
      */
     public function start()
     {
+        if ($this->hasEvent('on_init'))
+            call_user_func_array($this->events['on_init'], [microtime()]);
         if (!$this->session instanceof Session)
             throw new Exception('Session driver must implement "Scheduler\Contracts\Session" interface.');
+        if ($this->hasEvent('on_start'))
+            call_user_func_array($this->events['on_start'], [microtime()]);
         // Check on first time execution
         if (!$this->session->has('last_exec_time'))
             $this->session->set('last_exec_time', 0);
@@ -108,6 +112,8 @@ abstract class Tasker
         // Scheduler finished.
         $this->session->set('last_exec_time', time());
         $this->session->save();
+        if ($this->hasEvent('on_finish'))
+            call_user_func_array($this->events['on_finish'], [microtime()]);
         // Chaining
         return $this;    
     }
@@ -120,6 +126,8 @@ abstract class Tasker
      */
     private function executeJob($index)
     {
+        if ($this->hasEvent('on_job_start'))
+            call_user_func_array($this->events['on_job_start'], [$this->jobs[$index]->name, microtime()]);
         try {
             if ($this->onSchedule($this->jobs[$index])) {
                 $this->jobs[$index]->execute();
@@ -128,9 +136,11 @@ abstract class Tasker
         } catch (Exception $e) {
             $this->onException($this->jobs[$index], $e);
             $this->resetLog($this->jobs[$index]);
-            if ($this->onExceptionCallable)
-                call_user_func_array($this->onExceptionCallable, [$e]);
+            if ($this->hasEvent('on_exception'))
+                call_user_func_array($this->events['on_exception'], [$e]);
         }
+        if ($this->hasEvent('on_job_finish'))
+            call_user_func_array($this->events['on_job_finish'], [$this->jobs[$index]->name, microtime()]);
     }
 
     /**
@@ -142,7 +152,7 @@ abstract class Tasker
     private function onSchedule(Job &$job)
     {
         if (!$this->session->has('jobs')
-            && !isset($this->session->get('jobs')->{get_class($job)})
+            && !isset($this->session->get('jobs')->{$job->name})
         ) return true;
 
         switch ($job->task->interval) {
@@ -216,8 +226,8 @@ abstract class Tasker
         if (!$this->session->has('jobs'))
             $this->session->set('jobs', new stdClass);
 
-        if (!isset($this->session->get('jobs')->{get_class($job)}))
-            $this->session->get('jobs')->{get_class($job)} = new stdClass;
+        if (!isset($this->session->get('jobs')->{$job->name}))
+            $this->session->get('jobs')->{$job->name} = new stdClass;
     }
 
     /**
@@ -229,7 +239,7 @@ abstract class Tasker
     private function log(Job &$job)
     {
         $this->buildSessionLog($job);
-        $this->session->get('jobs')->{get_class($job)}->time = time();
+        $this->session->get('jobs')->{$job->name}->time = time();
     }
 
     /**
@@ -243,7 +253,7 @@ abstract class Tasker
         if (!$job->task->canReset)
             return;
         $this->buildSessionLog($job);
-        $this->session->get('jobs')->{get_class($job)}->time = 0;
+        $this->session->get('jobs')->{$job->name}->time = 0;
     }
 
     /**
@@ -269,7 +279,7 @@ abstract class Tasker
      */
     private function lapsedTimeToMinutes(Job &$job)
     {
-        return ($this->time - $this->session->get('jobs')->{get_class($job)}->time) / 60;
+        return ($this->time - $this->session->get('jobs')->{$job->name}->time) / 60;
     }
 
     /**
@@ -284,8 +294,8 @@ abstract class Tasker
     private function timeToDay(Job &$job, $time = null)
     {
         return date('Ymd', $time === null
-            ? $this->session->get('jobs')->{get_class($job)}->time
-            : strtotime($time, $this->session->get('jobs')->{get_class($job)}->time)
+            ? $this->session->get('jobs')->{$job->name}->time
+            : strtotime($time, $this->session->get('jobs')->{$job->name}->time)
         );
     }
 
@@ -301,8 +311,8 @@ abstract class Tasker
     private function timeToMonth(Job &$job, $time = null)
     {
         return date('Ym', $time === null
-            ? $this->session->get('jobs')->{get_class($job)}->time
-            : strtotime($time, $this->session->get('jobs')->{get_class($job)}->time)
+            ? $this->session->get('jobs')->{$job->name}->time
+            : strtotime($time, $this->session->get('jobs')->{$job->name}->time)
         );
     }
 
@@ -318,8 +328,21 @@ abstract class Tasker
     private function timeToWeek(Job &$job, $time = null)
     {
         return date('YW', $time === null
-            ? $this->session->get('jobs')->{get_class($job)}->time
-            : strtotime($time, $this->session->get('jobs')->{get_class($job)}->time)
+            ? $this->session->get('jobs')->{$job->name}->time
+            : strtotime($time, $this->session->get('jobs')->{$job->name}->time)
         );
+    }
+
+    /**
+     * Returns flag indicating if there is an event callable available or not.
+     * @since 1.0.4
+     * 
+     * @param string $event
+     * 
+     * @return bool
+     */
+    private function hasEvent($event)
+    {
+        return array_key_exists($event, $this->events) && is_callable($this->events[$event]);
     }
 }
