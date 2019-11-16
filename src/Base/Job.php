@@ -9,7 +9,7 @@ namespace Scheduler\Base;
  * @copyright 10quality <info@10quality.com>
  * @package Scheduler
  * @license MIT
- * @version 1.0.0
+ * @version 1.0.4
  */
 abstract class Job
 {
@@ -37,8 +37,13 @@ abstract class Job
      */
     public function __get($property)
     {
-        if ($property === 'task')
-            return $this->$property;
+        switch ($property) {
+            case 'task':
+                return $this->$property;
+            case 'name':
+                return get_class($this);
+        }
+        return null;
     }
 
     /**

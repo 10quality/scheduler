@@ -15,7 +15,7 @@ use Scheduler\Contracts\Session;
  * @copyright 10quality <info@10quality.com>
  * @package Scheduler
  * @license MIT
- * @version 1.0.0
+ * @version 1.0.4
  */
 abstract class Tasker
 {
@@ -39,6 +39,13 @@ abstract class Tasker
      * @var array
      */
     protected $jobs;
+
+    /**
+     * Callback to use when an exception occurs.
+     * @since 1.0.4
+     * @var callable
+     */
+    protected $onExceptionCallable;
 
     /**
      * Default constructor.
@@ -119,7 +126,10 @@ abstract class Tasker
                 $this->log($this->jobs[$index]);
             }
         } catch (Exception $e) {
-            // TODO
+            $this->onException($this->jobs[$index], $e);
+            $this->resetLog($this->jobs[$index]);
+            if ($this->onExceptionCallable)
+                call_user_func_array($this->onExceptionCallable, [$e]);
         }
     }
 
@@ -127,7 +137,7 @@ abstract class Tasker
      * Returns flag indicating if task is onSchedule and ready to be executed.
      * @since 1.0.0
      *
-     * @param object $job.
+     * @param \Scheduler\Base\Job $job
      */
     private function onSchedule(Job &$job)
     {
@@ -173,12 +183,6 @@ abstract class Tasker
                     return true;
                 break;
             case Task::CUSTOM:
-            /*
-                print_r([
-                    'minutes'   =>  $job->task->minutes,
-                    'task'      => $this->lapsedTimeToMinutes($job),
-                    'flag'      =>$job->task->minutes !== null && $this->lapsedTimeToMinutes($job) > $job->task->minutes,
-                ]);*/
                 if ($job->task->minutes !== null && $this->lapsedTimeToMinutes($job) > $job->task->minutes)
                     return true;
                 break;
@@ -202,25 +206,64 @@ abstract class Tasker
     }
 
     /**
-     * Logs executed job.
-     * @since 1.0.0
+     * Buils session log structure.
+     * @since 1.0.4
      *
-     * @param object $job.
+     * @param \Scheduler\Base\Job $job
      */
-    private function log(Job &$job)
+    private function buildSessionLog(Job &$job)
     {
         if (!$this->session->has('jobs'))
             $this->session->set('jobs', new stdClass);
 
         if (!isset($this->session->get('jobs')->{get_class($job)}))
             $this->session->get('jobs')->{get_class($job)} = new stdClass;
+    }
 
+    /**
+     * Logs executed job.
+     * @since 1.0.0
+     *
+     * @param \Scheduler\Base\Job $job
+     */
+    private function log(Job &$job)
+    {
+        $this->buildSessionLog($job);
         $this->session->get('jobs')->{get_class($job)}->time = time();
+    }
+
+    /**
+     * Resets log, forcing it to run in the next run.
+     * @since 1.0.4
+     *
+     * @param \Scheduler\Base\Job $job
+     */
+    private function resetLog(Job &$job)
+    {
+        if (!$job->task->canReset)
+            return;
+        $this->buildSessionLog($job);
+        $this->session->get('jobs')->{get_class($job)}->time = 0;
+    }
+
+    /**
+     * Handles exception.
+     * @since 1.0.4
+     *
+     * @param \Scheduler\Base\Job $job
+     * @param Exception           $e
+     */
+    private function onException(Job &$job, Exception &$e)
+    {
+        if ($job->task->onExceptionCallable)
+            call_user_func_array($job->task->onExceptionCallable, [$e]);
     }
 
     /**
      * Returns lapsed time to minutes.
      * @since 1.0.0
+     *
+     * @param \Scheduler\Base\Job $job
      *
      * @return float
      */

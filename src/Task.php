@@ -9,7 +9,7 @@ namespace Scheduler;
  * @copyright 10quality <info@10quality.com>
  * @package Scheduler
  * @license MIT
- * @version 1.0.3
+ * @version 1.0.4
  */
 class Task
 {
@@ -117,6 +117,20 @@ class Task
      * @var object
      */
     protected $minutes = null;
+
+    /**
+     * Flag that indicates if task can be reset if exception occurs.
+     * @since 1.0.4
+     * @var bool
+     */
+    protected $canReset = false;
+
+    /**
+     * Callback to use when an exception occurs.
+     * @since 1.0.4
+     * @var callable
+     */
+    protected $onExceptionCallable = null;
 
     /**
      * Sets task to a daily interval.
@@ -280,6 +294,34 @@ class Task
     }
 
     /**
+     * Sets reset flag.
+     * @since 1.0.4
+     * 
+     * @param bool $flag Reset flag.
+     *
+     * @return this
+     */
+    public function canReset($flag = true)
+    {
+        $this->canReset = $flag ? true : false;
+        return $this;
+    }
+
+    /**
+     * Sets exception callable.
+     * @since 1.0.4
+     * 
+     * @param callable $callable
+     *
+     * @return this
+     */
+    public function onException($callable)
+    {
+        $this->onExceptionCallable = $callable;
+        return $this;
+    }
+
+    /**
      * Getter function.
      * @since 1.0.0
      *
@@ -290,6 +332,8 @@ class Task
         switch ($property) {
             case 'interval':
             case 'minutes':
+            case 'canReset':
+            case 'onExceptionCallable':
                 return $this->$property;
         }
         return null;

@@ -14,7 +14,7 @@ use Scheduler\Base\Tasker;
  * @copyright 10quality <info@10quality.com>
  * @package Scheduler
  * @license MIT
- * @version 1.0.3
+ * @version 1.0.4
  */
 class Scheduler extends Tasker
 {
@@ -42,10 +42,14 @@ class Scheduler extends Tasker
                 $this->session = File::load($settings['session']['path'] . '/scheduler.json');
                 break;
             case 'callable':
-                if ($driveCallable !== null)
-                    $this->session = call_user_func_array($driveCallable, [$settings['session']]);
+                if (array_key_exists('callable', $settings['session']))
+                    $this->session = call_user_func_array($settings['session']['callable'], []);
                 break;
         }
+        if (array_key_exists('events', $settings)
+            && array_key_exists('on_exception', $settings['events'])
+        )
+            $this->onExceptionCallable = $settings['events']['on_exception'];
     }
 
     /**

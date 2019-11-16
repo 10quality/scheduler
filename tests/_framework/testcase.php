@@ -10,11 +10,13 @@ class Scheduler_TestCase extends PHPUnit_Framework_TestCase
             ->setConstructorArgs([
                 [
                     'jobs'      => ['path' => JOBS_PATH],
-                    'session'   => ['driver' => 'callable'],
-                ],
-                function() use(&$session) {
-                    return new SessionMock(empty($session) ? [] : $session);
-                }
+                    'session'   => [
+                                    'driver'    => 'callable',
+                                    'callable'  => function() use(&$session) {
+                                        return new SessionMock(empty($session) ? [] : $session);
+                                    }
+                                ],
+                ]
             ])
             ->getMock();
     }
@@ -23,11 +25,13 @@ class Scheduler_TestCase extends PHPUnit_Framework_TestCase
         return Scheduler::ready(
             [
                 'jobs'      => ['path' => JOBS_PATH],
-                'session'   => ['driver' => 'callable'],
-            ],
-            function() use(&$session) {
-                return new SessionMock(empty($session) ? [] : $session);
-            }
+                'session'   => [
+                                'driver'    => 'callable',
+                                'callable'  => function() use(&$session) {
+                                    return new SessionMock(empty($session) ? [] : $session);
+                                }
+                            ],
+            ]
         );
     }
     

@@ -131,7 +131,69 @@ $task->everyThreeDays();
 $task->custom($minutes);
 ```
 
+### Handling Exceptions
+
+Scheduler will run continuously without interruption. You can handle exceptions individually per job or globally to log them as needed.
+
+#### Global Exception Handling
+
+Add a `on_exception` callable handler in the scheduler's events configuration, like in the following example:
+
+```php
+Scheduler::ready([
+    'jobs'      => ['path' => __DIR__.'/jobs'],
+    'session'   => ['driver' => 'file', 'path'=>__DIR__.'/.tmp'],
+    'events'    => [
+                    'on_exception' => function($e) {
+                        // Do anything with exception
+                        echo $e->getMessage();
+                    }
+                ],
+]);
+
+#### Job Exceptions
+
+Add a exception handling callable when defining the job task, like this:
+
+```php
+Scheduler::ready([...])
+    ->job('MyJob', function($task) {
+        // Here we define the task interval
+        return $task->daily()
+            ->onException(function($e) {
+                // Do anything with exception
+                echo $e->getMessage();
+            });
+    });
+```
+
+To reset the job when an exception occurs and force it to be executed on the next run, indicate it on the task:
+```php
+Scheduler::ready([...])
+    ->job('MyJob', function($task) {
+        // Here we define the task interval
+        return $task->daily()
+            ->canReset()
+            ->onException(function(Exception $e) {
+                // Do anything with exception
+            });
+    });
+```
+
 ### Session
+
+#### File
+
+Indicate the folder where session file will be stored. Make sure this folder has the proper permissions.
+
+```php
+Scheduler::ready([
+    'jobs'      => ['path' => __DIR__.'/jobs'],
+    'session'   => ['driver' => 'file', 'path'=>__DIR__.'/.tmp'],
+]);
+```
+
+#### Callable
 
 You can create your own session driver by extending from the [Session](https://github.com/10quality/scheduler/blob/v1.0/src/Contracts/Session.php) interface:
 
@@ -150,15 +212,15 @@ class MySessionDriver implements Session
 Then, when initializing the scheduler, set the driver to `callable` and add the *callable* as second parameter, like the following example:
 
 ```php
-Scheduler::ready(
-    [
-        'jobs'      => ['path' => __DIR__.'/jobs'],
-        'session'   => ['driver' => 'callable'],
-    ],
-    function() {
-        return MySessionDriver::load( $custom_options );
-    }
-);
+Scheduler::ready([
+    'jobs'      => ['path' => __DIR__.'/jobs'],
+    'session'   => [
+                    'driver'    => 'callable',,
+                    'callable'  => function() use(&$session) {
+                        return MySessionDriver::load( $custom_options );
+                    }
+                ],
+]);
 ```
 
 ## Requirements
