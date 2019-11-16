@@ -14,7 +14,7 @@ use Scheduler\Base\Tasker;
  * @copyright 10quality <info@10quality.com>
  * @package Scheduler
  * @license MIT
- * @version 1.0.0
+ * @version 1.0.3
  */
 class Scheduler extends Tasker
 {
@@ -30,15 +30,20 @@ class Scheduler extends Tasker
      * Setup settings and inits server session.
      * @since 1.0.0
      *
-     * @param string $settings Settings.
+     * @param string   $settings      Settings.
+     * @param callable $driveCallable Custom drive init callable.
      */
-    public function __construct($settings)
+    public function __construct($settings, $driveCallable = null)
     {
         parent::__construct();
         $this->jobsPath = $settings['jobs']['path'];
         switch ($settings['session']['driver']) {
             case 'file':
                 $this->session = File::load($settings['session']['path'] . '/scheduler.json');
+                break;
+            case 'callable':
+                if ($driveCallable !== null)
+                    $this->session = call_user_func_array($driveCallable, [$settings['session']]);
                 break;
         }
     }
@@ -47,10 +52,11 @@ class Scheduler extends Tasker
      * Static constructor.
      * @since 1.0.0
      *
-     * @param string $settings Settings.
+     * @param string   $settings      Settings.
+     * @param callable $driveCallable Custom drive init callable.
      */
-    public static function ready($settings)
+    public static function ready($settings, $driveCallable = null)
     {
-        return new self($settings);
+        return new self($settings, $driveCallable);
     }
 }

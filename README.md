@@ -119,6 +119,46 @@ $task->everyHour();
 
 // Every 12 hours
 $task->everyTwelveHours();
+
+// Every 2 days
+$task->everyTwoDays();
+
+// Every 3 days
+$task->everyThreeDays();
+
+// Every XXX minutes (custom minutes)
+// @param init $minutes Custome minutes interval
+$task->custom($minutes);
+```
+
+### Session
+
+You can create your own session driver by extending from the [Session](https://github.com/10quality/scheduler/blob/v1.0/src/Contracts/Session.php) interface:
+
+```php
+
+use Scheduler\Contracts\Session;
+
+class MySessionDriver implements Session
+{
+    /*
+     * See and develop required interface methods....
+     */
+}
+```
+
+Then, when initializing the scheduler, set the driver to `callable` and add the *callable* as second parameter, like the following example:
+
+```php
+Scheduler::ready(
+    [
+        'jobs'      => ['path' => __DIR__.'/jobs'],
+        'session'   => ['driver' => 'callable'],
+    ],
+    function() {
+        return MySessionDriver::load( $custom_options );
+    }
+);
 ```
 
 ## Requirements
@@ -133,4 +173,4 @@ PSR-4.
 
 The MIT License (MIT)
 
-Copyright (c) 2016 [10Quality](http://www.10quality.com).
+Copyright (c) 2016-2019 [10Quality](http://www.10quality.com).

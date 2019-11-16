@@ -13,7 +13,7 @@ use Scheduler\Contracts\Session;
  * @copyright 10quality <info@10quality.com>
  * @package Scheduler
  * @license MIT
- * @version 1.0.2
+ * @version 1.0.3
  */
 class File extends JSONArray implements Session
 {
@@ -65,14 +65,13 @@ class File extends JSONArray implements Session
     /**
      * Returns a session value based on a given key.
      * @since 1.0.0
-     * @since 1.0.2 Fix for #1
      *
      * @return mixed     
      */
     public function &get($key)
     {
-        $default = null;
-        return $this->has($key) ? $this[$key] : $default;
+        $default = $this->has($key) ? $this[$key] : null;
+        return $default;
     }
 
     /**

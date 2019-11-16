@@ -9,7 +9,7 @@ namespace Scheduler;
  * @copyright 10quality <info@10quality.com>
  * @package Scheduler
  * @license MIT
- * @version 1.0.0
+ * @version 1.0.3
  */
 class Task
 {
@@ -77,6 +77,20 @@ class Task
     const WEEKLY = 8;
 
     /**
+     * Once every 2 days.
+     * @since 1.0.3
+     * @var int
+     */
+    const EVERY2DAYS = 9;
+
+    /**
+     * Once every 3 days.
+     * @since 1.0.3
+     * @var int
+     */
+    const EVERY3DAYS = 10;
+
+    /**
      * Now task constant.
      * @since 1.0.0
      * @var int
@@ -84,11 +98,25 @@ class Task
     const NOW = -1;
 
     /**
+     * Custom minute interval.
+     * @since 1.0.3
+     * @var int
+     */
+    const CUSTOM = -2;
+
+    /**
      * Task process linked to job.
      * @since 1.0.0
      * @var object
      */
     protected $interval;
+
+    /**
+     * Custom time value if custom is selected.
+     * @since 1.0.0
+     * @var object
+     */
+    protected $minutes = null;
 
     /**
      * Sets task to a daily interval.
@@ -211,6 +239,47 @@ class Task
     }
 
     /**
+     * Sets task to a 2 days interval.
+     * @since 1.0.3
+     *
+     * @return this
+     */
+    public function everyTwoDays()
+    {
+        $this->interval = self::EVERY2DAYS;
+        return $this;
+    }
+
+    /**
+     * Sets task to a 3 days interval.
+     * @since 1.0.3
+     *
+     * @return this
+     */
+    public function everyThreeDays()
+    {
+        $this->interval = self::EVERY3DAYS;
+        return $this;
+    }
+
+    /**
+     * Sets task twice weekly interval.
+     * @since 1.0.3
+     * 
+     * @param int $minutes Custom minutes interval value.
+     *
+     * @return this
+     */
+    public function custom($minutes)
+    {
+        $this->interval = self::CUSTOM;
+        $this->minutes = $minutes;
+        if (empty($this->minutes) || !is_integer($this->minutes))
+            $this->minutes = null;
+        return $this;
+    }
+
+    /**
      * Getter function.
      * @since 1.0.0
      *
@@ -218,7 +287,11 @@ class Task
      */
     public function __get($property)
     {
-        if ($property === 'interval')
-            return $this->$property;
+        switch ($property) {
+            case 'interval':
+            case 'minutes':
+                return $this->$property;
+        }
+        return null;
     }
 }

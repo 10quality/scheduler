@@ -6,6 +6,7 @@ use stdClass;
 use Closure;
 use Exception;
 use Scheduler\Task;
+use Scheduler\Contracts\Session;
 
 /**
  * Scheduler base abstract class.
@@ -67,7 +68,7 @@ abstract class Tasker
             throw new Exception('Job file not located at:' . $filename);
 
         // Include job class
-        include $filename;
+        require_once $filename;
         $job = new $name();
 
         // Assign task
@@ -88,6 +89,8 @@ abstract class Tasker
      */
     public function start()
     {
+        if (!$this->session instanceof Session)
+            throw new Exception('Session driver must implement "Scheduler\Contracts\Session" interface.');
         // Check on first time execution
         if (!$this->session->has('last_exec_time'))
             $this->session->set('last_exec_time', 0);
@@ -169,6 +172,29 @@ abstract class Tasker
                 if ($this->timeToWeek($job) != date('YW'))
                     return true;
                 break;
+            case Task::CUSTOM:
+            /*
+                print_r([
+                    'minutes'   =>  $job->task->minutes,
+                    'task'      => $this->lapsedTimeToMinutes($job),
+                    'flag'      =>$job->task->minutes !== null && $this->lapsedTimeToMinutes($job) > $job->task->minutes,
+                ]);*/
+                if ($job->task->minutes !== null && $this->lapsedTimeToMinutes($job) > $job->task->minutes)
+                    return true;
+                break;
+            case Task::EVERY2DAYS:
+                $day = date('Ymd');
+                if ($this->timeToDay($job) != $day && $this->timeToDay($job, '+1 day') != $day)
+                    return true;
+                break;
+            case Task::EVERY3DAYS:
+                $day = date('Ymd');
+                if ($this->timeToDay($job) != $day
+                    && $this->timeToDay($job, '+1 day') != $day
+                    && $this->timeToDay($job, '+2 day') != $day
+                )
+                    return true;
+                break;
             case Task::NOW:
                     return true;
         }
@@ -206,33 +232,51 @@ abstract class Tasker
     /**
      * Returns last executed to day.
      * @since 1.0.0
+     * 
+     * @param \Scheduler\Base\Job &$job
+     * @param string              $time Time modifications [see strtotime()].
      *
      * @return string
      */
-    private function timeToDay(Job &$job)
+    private function timeToDay(Job &$job, $time = null)
     {
-        return date('Ymd', $this->session->get('jobs')->{get_class($job)}->time);
+        return date('Ymd', $time === null
+            ? $this->session->get('jobs')->{get_class($job)}->time
+            : strtotime($time, $this->session->get('jobs')->{get_class($job)}->time)
+        );
     }
 
     /**
      * Returns last executed to day.
      * @since 1.0.0
+     * 
+     * @param \Scheduler\Base\Job &$job
+     * @param string              $time Time modifications [see strtotime()].
      *
      * @return string
      */
-    private function timeToMonth(Job &$job)
+    private function timeToMonth(Job &$job, $time = null)
     {
-        return date('Ym', $this->session->get('jobs')->{get_class($job)}->time);
+        return date('Ym', $time === null
+            ? $this->session->get('jobs')->{get_class($job)}->time
+            : strtotime($time, $this->session->get('jobs')->{get_class($job)}->time)
+        );
     }
 
     /**
      * Returns last executed to day.
      * @since 1.0.0
+     * 
+     * @param \Scheduler\Base\Job &$job
+     * @param string              $time Time modifications [see strtotime()].
      *
      * @return string
      */
-    private function timeToWeek(Job &$job)
+    private function timeToWeek(Job &$job, $time = null)
     {
-        return date('YW', $this->session->get('jobs')->{get_class($job)}->time);
+        return date('YW', $time === null
+            ? $this->session->get('jobs')->{get_class($job)}->time
+            : strtotime($time, $this->session->get('jobs')->{get_class($job)}->time)
+        );
     }
 }
