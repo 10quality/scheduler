@@ -149,6 +149,7 @@ Scheduler::ready([
                     }
                 ],
 ]);
+```
 
 List of events (parameters can be used optionally):
 
