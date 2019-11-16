@@ -135,13 +135,17 @@ $task->custom($minutes);
 
 You can define callable event handlers when configuring the scheduler, like in the following example:
 
-```
+```php
 Scheduler::ready([
     'jobs'      => ['path' => __DIR__.'/jobs'],
     'session'   => ['driver' => 'file', 'path'=>__DIR__.'/.tmp'],
     'events'    => [
                     'on_start' => function($microtime) {
                         // Do something during event
+                    },
+                    'on_job_start' => function($jobName, $microtime) {
+                        if ($jobName === 'Job')
+                            // Do something during event
                     }
                 ],
 ]);
